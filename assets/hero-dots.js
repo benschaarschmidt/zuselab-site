@@ -73,16 +73,41 @@
     n = count;
   }
 
+  function heroBox() {
+    return hero.getBoundingClientRect();
+  }
+
   function place() {
     var mobile = narrowQ.matches;
-    baseR = mobile ? 1.15 : 1.55;
+    baseR = mobile ? 1.35 : 1.55;
     if (mobile) {
-      // Keep the head below the fixed menu. The hero is short, so the
-      // portrait sits in the upper part of the text block.
-      dw = cw * 1.05;
-      dh = dw / ASPECT;
+      // The headline stays at the top and the ticker at the bottom.
+      // Park the head in the open band between them, not behind the type.
+      var box = heroBox();
+      var textBottom = 0;
+      var nodes = hero.querySelectorAll(":scope > p, :scope > h1, :scope > h2");
+      for (var i = 0; i < nodes.length; i++) {
+        textBottom = Math.max(textBottom, nodes[i].getBoundingClientRect().bottom - box.top);
+      }
+      var band = hero.querySelector(".band");
+      var bandTop = ch - 36;
+      if (band) bandTop = band.getBoundingClientRect().top - box.top;
+      var top = textBottom + 10;
+      var bot = Math.max(top + 96, bandTop - 8);
+      var room = bot - top;
+      var natural = (cw * 1.04) / ASPECT;
+      dh = Math.max(natural, Math.min(room * 0.98, (cw * 1.16) / ASPECT));
+      dw = dh * ASPECT;
+      if (dw > cw * 1.14) {
+        dw = cw * 1.14;
+        dh = dw / ASPECT;
+      }
       ox = (cw - dw) / 2;
-      oy = 36 - dh * 0.05;
+      var mid = (top + bot) / 2;
+      oy = mid - 0.40 * dh;
+      var hair = oy + 0.07 * dh;
+      if (hair < textBottom + 6) oy += textBottom + 6 - hair;
+      baseR = Math.max(1.25, Math.min(2.05, dw / 255));
       return;
     }
     // Whole picture inside the hero, top-aligned, so the head is not cropped.
@@ -213,6 +238,8 @@
   decode(narrowQ.matches ? data.m : data.d);
   resize();
   kick();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
+  window.addEventListener("load", resize);
 
   if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
   window.addEventListener("resize", resize);
