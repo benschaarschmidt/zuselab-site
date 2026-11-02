@@ -1,0 +1,18 @@
+name: CSP hash
+on:
+  push:
+    branches: [main]
+    paths: [index.html]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/update-csp-hash.py
+      - run: |
+          if ! git diff --quiet index.html; then
+            git config user.name "csp-hash-bot"; git config user.email "bot@users.noreply.github.com"
+            git commit -am "Update CSP hash for inline script"; git push
+          fi
